@@ -1,2 +1,2 @@
 # cgh
-Collaborative generative hashing for cold start recommendation
+This is code for the Collaborative Generative Hashing for cold start recommendation.
