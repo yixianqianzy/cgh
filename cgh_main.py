@@ -160,8 +160,8 @@ def VAE_stoc_neuron(alpha, gammau, gammav, dim_inputu, dim_inputv, dim_hidden, b
 
 if __name__ == "__main__":
 
-    v_content = sio.loadmat('./data/item_train.mat')
-    u_content = sio.loadmat('./data/user_train.mat')
+    v_content = sio.loadmat('./data/item_content.mat')
+    u_content = sio.loadmat('./data/user_content.mat')
     ufactor = sio.loadmat('./data/u_factor.mat')
     vfactor= sio.loadmat('./data/v_factor.mat')
     traindata_r = sio.loadmat('./data/R_train.mat')
@@ -180,9 +180,9 @@ if __name__ == "__main__":
 
     dim_input_uer = utrain.shape[1]
     dim_input_item = vtrain.shape[1]
-    dim_hidden = 200
+    dim_hidden = hutrain.shape[1]
     print('dim of hidden variable is %d' % dim_hidden)
-    batchu_size = 10000
+    batchu_size = 5000
     batchv_size = 2000
     learning_rate = 0.01
     gammau = 0.8
@@ -207,78 +207,39 @@ bu = para_list['encodeu/bencodeu:0']
 Uu = para_list['decodeu/wdecodeu:0']  # the codebook
 shiftu = para_list['scaleu/shift_parau:0']
 scaleu = para_list['scaleu/scale_parau:0']
-epsilonu = 0.5
-trainlogitsu = np.dot(np.array(utrain), Wu) + bu
-trainpresu = 1.0 / (1 + np.exp(-trainlogitsu))
-hutrain = (np.sign(trainpresu - epsilonu) + 1.0) / 2.0
-poten_item = np.matmul(hutrain, Uu) * np.abs(scaleu) + shiftu
-
 Wv = para_list['encodev/wencodev:0']  # ??
 bv = para_list['encodev/bencodev:0']
 Uv = para_list['decodev/wdecodev:0']  # the codebook
 shiftv = para_list['scalev/shift_parav:0']
 scalev = para_list['scalev/scale_parav:0']
-epsilonv = 0.5
-trainlogitsv = np.dot(np.array(vtrain), Wv) + bv
-trainpresv = 1.0 / (1 + np.exp(-trainlogitsv))
-hvtrain = (np.sign(trainpresv - epsilonv) + 1.0) / 2.0
-poten_user = np.matmul(hvtrain, Uv) * np.abs(scalev) + shiftv
-hutrain[hutrain < 1] = -1
-hvtrain[hvtrain < 1] = -1
-hu = hutrain
-hv = hvtrain
-filename = './warm/hash' + str(dim_hidden) + 'bit.mat'
-sio.savemat(filename, {'hu': hu, 'hv': hv, 'Wu': Wu, 'bu': bu, 'Uu': Uu, 'scaleu': scaleu,
+filename = 'hash' + str(dim_hidden) + 'bit.mat'
+sio.savemat(filename, {'Wu': Wu, 'bu': bu, 'Uu': Uu, 'scaleu': scaleu,
                        'shiftu': shiftu, 'Wv': Wv, 'bv': bv, 'Uv': Uv, 'scalev': scalev, 'shiftv': shiftv})
-sio.savemat('gen_user_item.mat', {'gen_item': poten_item, 'gen_user': poten_user})
 
-# predict cold user
-cd_user0 = sio.loadmat('./cold_user/R_train_user.mat')
-cd_user_test0 = sio.loadmat('./cold_user/R_test_user.mat')
-cd_user_train0 = sio.loadmat('./cold_user/cd_user_train.mat')
-cd_user_item0 = sio.loadmat('./cold_user/cd_user_item.mat')
-cd_user_test = cd_user_test0['R_test_user']
-cd_user_train = cd_user_train0['cd_user_train']
-cd_user_item = cd_user_item0['cd_user_item']
-
-cdtrainlogitsu = np.dot(np.array(cd_user_train), Wu) + bu
-cdtrainpresu = 1.0 / (1 + np.exp(-cdtrainlogitsu))
-cdhutrain = (np.sign(cdtrainpresu - epsilonu) + 1.0) / 2.0
-
-cdtrainlogitsv = np.dot(np.array(cd_user_item), Wv) + bv
-cdtrainpresv = 1.0 / (1 + np.exp(-cdtrainlogitsv))
-cdhvtrain = (np.sign(cdtrainpresv - epsilonv) + 1.0) / 2.0
-cdhutrain[cdhutrain < 1] = -1
-cdhvtrain[cdhvtrain < 1] = -1
-hu = cdhutrain
-hv = cdhvtrain
-filename = './cold_user/cd_user_' + str(dim_hidden) + '1bit.mat'
-sio.savemat(filename, {'hu': hu, 'hv': hv})
-# poten_user = np.matmul(hvtrain, Uv) * np.abs(scalev) + shiftv
-
-
-# predict cold item
-cd_item0 = sio.loadmat('./cold_item/R_train_item.mat')
-cd_item_test0 = sio.loadmat('./cold_item/R_test_item.mat')
-cd_item_train0 = sio.loadmat('./cold_item/cd_item_train.mat')
-cd_item_user0 = sio.loadmat('./cold_item/cd_item_user.mat')
-cd_item_test = cd_item_test0['R_test_item']
-cd_item_train = cd_item_train0['cd_item_train']
-cd_item_user = cd_item_user0['cd_item_user']
-
-cdtrainlogitsu = np.dot(np.array(cd_item_user), Wu) + bu
-cdtrainpresu = 1.0 / (1 + np.exp(-cdtrainlogitsu))
-cdhutrain = (np.sign(cdtrainpresu - epsilonu) + 1.0) / 2.0
-
-cdtrainlogitsv = np.dot(np.array(cd_item_train), Wv) + bv
-cdtrainpresv = 1.0 / (1 + np.exp(-cdtrainlogitsv))
-cdhvtrain = (np.sign(cdtrainpresv - epsilonv) + 1.0) / 2.0
-cdhutrain[cdhutrain < 1] = -1
-cdhvtrain[cdhvtrain < 1] = -1
-hu = cdhutrain
-hv = cdhvtrain
-
-filename = './cold_item/cd_item_' + str(dim_hidden) + '1bit.mat'
-sio.savemat(filename, {'hu': hu, 'hv': hv})
+# # predict cold item
+# cd_item0 = sio.loadmat('./cold_item/R_train_item.mat')
+# cd_item_test0 = sio.loadmat('./cold_item/R_test_item.mat')
+# cd_item_train0 = sio.loadmat('./cold_item/cd_item_train.mat')
+# epsilonu = 0.5
+# epsilonv = 0.5
+# cd_item_user0 = sio.loadmat('./cold_item/cd_item_user.mat')
+# cd_item_test = cd_item_test0['R_test_item']
+# cd_item_train = cd_item_train0['cd_item_train']
+# cd_item_user = cd_item_user0['cd_item_user']
+#
+# cdtrainlogitsu = np.dot(np.array(cd_item_user), Wu) + bu
+# cdtrainpresu = 1.0 / (1 + np.exp(-cdtrainlogitsu))
+# cdhutrain = (np.sign(cdtrainpresu - epsilonu) + 1.0) / 2.0
+#
+# cdtrainlogitsv = np.dot(np.array(cd_item_train), Wv) + bv
+# cdtrainpresv = 1.0 / (1 + np.exp(-cdtrainlogitsv))
+# cdhvtrain = (np.sign(cdtrainpresv - epsilonv) + 1.0) / 2.0
+# cdhutrain[cdhutrain < 1] = -1
+# cdhvtrain[cdhvtrain < 1] = -1
+# hu = cdhutrain
+# hv = cdhvtrain
+#
+# filename = './cold_item/cd_item_' + str(dim_hidden) + 'bit.mat'
+# sio.savemat(filename, {'hu': hu, 'hv': hv})
 
 

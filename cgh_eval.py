@@ -63,8 +63,8 @@ def pred1_poten_users(tk, nc, R_test, item_id, users_id, poten_user, utrain):
         mi += kj
         nnz += pos_id.shape[0]
     pre_pot = mi / nnz
-    print('Precision of Potential customer is: %0.08f, The number of hit: %d, The number of positive ratings: %d,'
-      ' the number of original positive ratings: %d' % (pre_pot, mi, nnz, nnz0))
+    # print('Precision of Potential customer is: %0.08f, The number of hit: %d, The number of positive ratings: %d,'
+    #   ' the number of original positive ratings: %d' % (pre_pot, mi, nnz, nnz0))
     return pre_pot
 
 
@@ -81,12 +81,12 @@ def pred2_poten_users(tk, nc, R_test, item_id, users_id, poten_user, utrain):
         elif np.sum(R_test[users_id, item_id[i]]) > nr:
             nnz += 1
     pre_pot = mk / nnz
-    print('Precision of Potential customer is: %0.08f, The number of hit: %d, The number of test items: %0.02f' % (pre_pot, mk, nnz))
-    return pre_pot
+    # print('Precision of Potential customer is: %0.08f, The number of hit: %d, The number of test items: %0.02f' % (pre_pot, mk, nnz))
+    # return pre_pot
 
 
 dim_hidden = 200
-para = sio.loadmat('./warm/hash' + str(dim_hidden) + 'bit.mat')
+para = sio.loadmat('hash' + str(dim_hidden) + 'bit.mat')
 Wu = para['Wu']
 bu = para['bu']
 Uu = para['Uu']  # the codebook
@@ -115,7 +115,7 @@ epsilonv = 0.5
 cd_item_test0 = sio.loadmat('./cold_item/R_test_item.mat')
 # cd_item_train = cd_item0['v_content_item']
 # cd_item_user = cd_item0['u_content_item']
-cd_item_train0 = sio.loadmat('./cold_item/cd_item_train.mat')
+cd_item_train0 = sio.loadmat('./cold_item/cd_item_train.mat')  # cd_item_train.mat is used for item cold start test, not for training.
 cd_item_user0 = sio.loadmat('./cold_item/cd_item_user.mat')
 cd_item_test = cd_item_test0['R_test_item']
 cd_item_train = cd_item_train0['cd_item_train']
@@ -134,17 +134,20 @@ sio.savemat(filename, {'poten_user': poten_user})
 
 # for nrr in range(5):
 nu = 5000  # test users: positive & negative users
-nr = 5 * 4  # original positive users
-# for u in range(6):
-tk = 5 * (3 + 1)  # potential users
-nc = 1000  # randomly choose negative users
-users_id = np.random.choice(range(utrain.shape[0]), nu)
-num_ratings = np.sum(R_test[users_id], axis=0)
-item_id0 = np.argwhere(num_ratings > nr)
-item_id = item_id0[:, 1]
-# prec2 = pred2_poten_users(tk, nc, R_test, item_id, users_id, poten_user, utrain)
-prec1 = pred1_poten_users(tk, nc, R_test, item_id, users_id, poten_user, utrain)
-filename = 'eva_poten_results.txt'
-with open(filename, 'a') as f:
-    f.write('dim_hidden: %d, No. rgl users: %d, No. poten users: %d, precision: %0.04f' % (dim_hidden, nr, tk, prec1))
-    f.write('\n')
+nr = 20  # original positive users
+for u in range(6):
+    tk = 5*(u + 1)  # the number of potential users k
+    nc = 1000  # randomly choose negative users
+    users_id = np.random.choice(range(utrain.shape[0]), nu)
+    num_ratings = np.sum(R_test[users_id], axis=0)
+    item_id0 = np.argwhere(num_ratings > nr)
+    item_id = item_id0[:, 1]
+    # prec2 = pred2_poten_users(tk, nc, R_test, item_id, users_id, poten_user, utrain)
+    prec1 = pred1_poten_users(tk, nc, R_test, item_id, users_id, poten_user, utrain)
+    print('The number of potential users: %d, Accuracy@k: %f' % (tk, prec1))
+    filename = 'eva_poten_results.txt'
+    with open(filename, 'a') as f:
+            f.write('dim_hidden: %d, No. rgl users: %d, No. poten users: %d, precision: %0.04f' % (dim_hidden, nr, tk, prec1))
+            f.write('\n')
+
+
