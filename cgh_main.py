@@ -99,6 +99,7 @@ def VAE_stoc_neuron(alpha, gammau, gammav, dim_inputu, dim_inputv, dim_hidden, b
         users_loss = []
         items_loss = []
         real_ratings_loss = []
+        np.random.seed = 3
         for i in range(max_iter):
             indx = np.random.choice(utrain.shape[0], batchu_size)
             indxv = np.random.choice(vtrain.shape[0], batchv_size)
@@ -181,7 +182,7 @@ if __name__ == "__main__":
     dim_input_item = vtrain.shape[1]
     dim_hidden = 200
     print('dim of hidden variable is %d' % dim_hidden)
-    batchu_size = 5000
+    batchu_size = 10000
     batchv_size = 2000
     learning_rate = 0.01
     gammau = 0.8
